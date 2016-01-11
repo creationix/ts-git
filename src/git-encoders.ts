@@ -1,6 +1,6 @@
 
-import {Mode, GitDate, Person, Commit, Tag, TreeNode} from "./git"
-import {encodeUtf8} from "./bodec"
+import { Mode, GitDate, Person, Commit, Tag, TreeNode } from "./git"
+import { ByteArray, encodeUtf8, toRaw } from "./bodec"
 
 function codeToNibble(code: number): number {
   code |= 0;
@@ -80,4 +80,30 @@ export function encodeTree(tree: Array<TreeNode>): string {
       "\0" + decodeHex(node.hash);
   }
   return raw;
+}
+
+export function encodeBlob(data: ByteArray): string;
+export function encodeBlob(data: string): string;
+export function encodeBlob(data: any): string {
+  if (typeof data === "string") return data;
+  return toRaw(data);
+}
+
+var encoders = {
+  commit: encodeCommit,
+  tag: encodeTag,
+  tree: encodeTree,
+  blob: encodeBlob,
+};
+
+export function frame(type: string, commit: Commit): string;
+export function frame(type: string, tag: Tag): string;
+export function frame(type: string, tree: Array<TreeNode>): string;
+export function frame(type: string, buf: ByteArray): string;
+export function frame(type: string, raw: string): string;
+export function frame(type: string, value: any): string {
+  if (typeof value !== "string") {
+    value = encoders[type](value);
+  }
+  return type + " " + value.length + "\0" + value;
 }

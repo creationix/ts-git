@@ -20,7 +20,7 @@ function sha1(buffer?: any): any {
   var shasum = create(true);
   shasum.update(buffer);
   return shasum.digest();
-};
+}
 
 function create(sync: boolean) {
   var h0 = 0x67452301;
