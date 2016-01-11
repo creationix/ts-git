@@ -39,4 +39,4 @@ export interface TreeNode {
   hash: string,
 }
 
-export * from "git-encoders"
+export * from "./git-encoders"

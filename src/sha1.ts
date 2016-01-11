@@ -1,6 +1,6 @@
 // A pure JS implementation of sha1.
 export default sha1;
-import {ByteArray} from "bodec";
+import {ByteArray} from "./bodec";
 
 // Shared array for sync calls. (Since only one can run at a time, it's safe to reuse)
 var shared = new Uint32Array(80);

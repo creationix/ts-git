@@ -1,6 +1,6 @@
 
-import {Mode, GitDate, Person, Commit, Tag, TreeNode} from "git"
-import {encodeUtf8} from "bodec"
+import {Mode, GitDate, Person, Commit, Tag, TreeNode} from "./git"
+import {encodeUtf8} from "./bodec"
 
 function codeToNibble(code: number): number {
   code |= 0;

@@ -1,7 +1,7 @@
 
-import sha1 from "sha1"
-import {fromRaw, ByteArray} from "bodec"
-import * as Git from "git"
+import sha1 from "./sha1"
+import {fromRaw, ByteArray} from "./bodec"
+import * as Git from "./git"
 
 var commit: Git.Commit = {
   tree: "419ccfe916484efb8a5d039d7e4624d1662fd256",
