@@ -1,6 +1,5 @@
 
 import sha1 from "./sha1"
-import {fromRaw, ByteArray} from "./bodec"
 import * as Git from "./git"
 
 function assert(condition: boolean, message?: string): void {
