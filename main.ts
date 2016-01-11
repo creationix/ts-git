@@ -110,21 +110,36 @@ function encodePerson(person: Person): string {
 }
 
 function encodeCommit(commit: Commit): string {
+  if (!commit.parents) { commit.parents = []; }
+  if (!commit.committer) { commit.committer = commit.author; }
   var raw = "";
-  if (commit.parents) {
-    for (var i = 0, l = commit.parents.length; i < l; i++) {
-      raw += "parent " + commit.parents[i] + "\n";
-    }
+  for (var i = 0, l = commit.parents.length; i < l; i++) {
+    raw += "parent " + commit.parents[i] + "\n";
   }
   raw += "tree " + commit.tree +
     "\nauthor " + encodePerson(commit.author) +
-    "\ncommitter " + encodePerson(commit.committer || commit.author) +
+    "\ncommitter " + encodePerson(commit.committer) +
     "\n\n" + encodeUtf8(commit.message);
   return raw;
 }
 
+function encodeTag(tag: Tag): string {
+  return "object " + tag.object +
+       "\ntype " + tag.type +
+       "\ntag " + tag.tag +
+       "\ntagger " + encodePerson(tag.tagger) +
+       "\n\n" + encodeUtf8(tag.message);  
+}
+
+function treeSort(a: TreeNode, b: TreeNode): number {
+  var aa = (a.mode === Mode.tree) ? a.name + "/" : a.name;
+  var bb = (b.mode === Mode.tree) ? b.name + "/" : b.name;
+  return aa > bb ? 1 : aa < bb ? -1 : 0;
+}
+
 function encodeTree(tree: Array<TreeNode>): string {
   var raw = "";
+  tree.sort(treeSort);
   for (var i = 0, l = tree.length; i < l; i++) {
     var node = tree[i];
     raw += node.mode.toString(8) + 
@@ -172,10 +187,10 @@ console.log("commit hash", hash);
 assert(hash === "e834d5aa95f9758c59cf127097d7ce2a0799e0b5", "hash mismatch for sample commit");
 
 var tree: Array<TreeNode> = [
-  { name: ".gitignore", mode: Mode.blob,
-    hash: "a6c7c2852d068ff1fef480ac369459598a62f82e"},
   { name: "main.ts", mode: Mode.blob,
     hash: "4054c0e5faccb9c0368aa685345e05e469cb0bd3"},
+  { name: ".gitignore", mode: Mode.blob,
+    hash: "a6c7c2852d068ff1fef480ac369459598a62f82e"},
 ];
 encoded = encodeTree(tree);
 console.log(encoded);
