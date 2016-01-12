@@ -1,5 +1,6 @@
 
 import sha1 from "./sha1"
+import run from "./run"
 import * as Git from "./git"
 
 function assert(condition: boolean, message?: string): void {
@@ -51,3 +52,128 @@ console.log({
   encoded: encoded,
 });
 assert(hash === "a6c7c2852d068ff1fef480ac369459598a62f82e", "hash mismatch for sample blob");
+
+var socket = new WebSocket("ws://localhost:8080/net/tls/github.com/443", ["ws-proxy"]);
+socket.binaryType = "arraybuffer";
+socket.onopen = function(evt: Event) {
+  console.log("open");
+};
+socket.onmessage = function(evt: MessageEvent) {
+  console.log(evt.data);
+  if (evt.data === "connected") {
+    startClone();
+  }
+};
+socket.onclose = function(evt: CloseEvent) {
+  console.log("close", evt.code);
+};
+
+function startClone() {
+  socket.onmessage = function(evt: MessageEvent) {
+    console.log("received", evt.data);
+  }
+  socket.send("GET /")
+}
+
+
+// See http(s) section in https://git-scm.com/book/en/v2/Git-Internals-Transfer-Protocols
+run(function* () {
+  console.log("Connecting to git repo through proxy...");
+  var socket = yield* connect("tls", "github.com", "443");
+  console.log("Connected to remote. Sending HTTP request...");
+  var path = "/creationix/conquest.git/info/refs?service=git-upload-pack";
+  var request = "GET " + path + " HTTP/1.1\r\nHost: github.com\r\n\r\n";
+  yield* socket.write(request);
+
+//  yield* sleep(200);
+  do {
+    var chunk = yield* socket.read();
+    console.log(chunk);
+    console.log(toString(chunk));
+  } while (chunk);
+}, function(err, result) {
+  console.log({ err, result });
+});
+
+function* sleep(ms) {
+  yield function (cb) {
+    setTimeout(cb, ms);
+  };
+}
+
+
+function* connect(protocol, host, port) {
+  var socket = new WebSocket("wss://tedit.creationix.com/proxy/" + protocol + "/" + host + "/" + port);
+  socket.binaryType = "arraybuffer";
+  var pending;
+  var buffer = [];
+  yield function (cb) {
+    socket.onmessage = function (evt) {
+      if (evt.data === "connect") {
+        return cb();
+      }
+      if (typeof evt.data === "string") {
+        console.log(evt.data);
+      }
+      else {
+        buffer.push(evt.data);
+        if (pending) flush();
+      }
+    };
+  };
+
+  return {
+    read: read,
+    write: write,
+  };
+
+  function flush() {
+    var cb = pending;
+    pending = null;
+    var data;
+    if (buffer.length === 1) {
+      data = new Uint8Array(buffer[0]);
+    }
+    else {
+      var count = 0;
+      var i, l;
+      for (i = 0, l = buffer.length; i < l; i++) {
+        count += buffer[i].byteLength;
+      }
+      data = new ArrayBuffer(count);
+      count = 0;
+      for (i = 0, l = buffer.length; i < l; i++) {
+        var src = new Uint8Array(buffer[i]);
+        var dst = new Uint8Array(data, count, src.length);
+        dst.set(src);
+        count += src.length;
+      }
+      data = new Uint8Array(data);
+    }
+    buffer.length = 0;
+    cb(null, data);
+  }
+
+  function* write(data) {
+    return socket.send(data);
+  }
+  function* read() {
+    return yield function (cb) {
+      pending = cb;
+      if (buffer.length) { flush(); }
+    };
+  }
+}
+
+function toString(buffer) {
+  var str = "";
+  for (var i = 0, l = buffer.length; i < l; i++) {
+    str += String.fromCharCode(buffer[i]);
+  }
+  // Decode UTF8
+  return decodeURIComponent(escape(str));
+}
+
+
+////////////////////////////// gen run //////////////////////
+
