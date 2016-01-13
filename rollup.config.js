@@ -1,5 +1,5 @@
 export default {
   entry: 'build/main.js',
-  dest: 'build/app.js',
+  dest: 'www/app.js',
   format: 'iife',
 }

@@ -1,4 +1,5 @@
 local connect = require('coro-net').connect
+local tlsWrap = require('coro-tls').wrap
 local split = require('coro-split')
 
 require('weblit-websocket')
@@ -23,13 +24,13 @@ require('weblit-app')
     local host = req.params.host
     local port = tonumber(req.params.port)
     local tls = req.params.protocol == "tls"
-    p{host=host,port=port,tls=tls}
-    p(req, read, write)
     local rRead, rWrite, rSocket = assert(connect{host=host,port=port})
-    p(rRead, rWrite, rSocket)
+    if tls then
+      rRead, rWrite = assert(tlsWrap(rRead, rWrite))
+    end
     lWrite({
       opcode = 1,
-      payload = "connected"
+      payload = "connect"
     })
     split(function ()
       for message in lRead do
@@ -47,4 +48,3 @@ require('weblit-app')
   end)
 
   .start()
-
