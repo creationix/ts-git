@@ -54,6 +54,7 @@ console.log({
   encoded: encoded,
 });
 assert(hash === "a6c7c2852d068ff1fef480ac369459598a62f82e", "hash mismatch for sample blob");
+
 window.onload = function() {
   // See http(s) section in https://git-scm.com/book/en/v2/Git-Internals-Transfer-Protocols
   run(function* () {
